@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Ekstrak Form Orderan</title>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4"></script>
+  <style>
+    body { font-family: Arial; padding: 20px; background: #f5f5f5; }
+    textarea, input, button { margin-top: 10px; width: 100%; padding: 10px; }
+    .section { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
+    .preview { white-space: pre-wrap; background: #eef; padding: 10px; }
+  </style>
+</head>
+<body>
+
+  <h2>📦 Ekstrak Data Orderan dari Gambar / Teks</h2>
+
+  <div class="section">
+    <label>🖼 Upload Screenshot (gunakan OCR)</label>
+    <input type="file" id="imageInput" accept="image/*">
+    <button onclick="processImage()">Ekstrak Gambar</button>
+  </div>
+
+  <div class="section">
+    <label>✍️ Atau Paste Teks Orderan:</label>
+    <textarea id="manualText" rows="10" placeholder="Paste teks dari Akulaku..."></textarea>
+    <button onclick="parseText()">Proses Teks</button>
+  </div>
+
+  <div class="section">
+    <h3>📄 Preview Format TXT:</h3>
+    <div id="output" class="preview"></div>
+    <button onclick="downloadTxt()">⬇️ Download TXT</button>
+  </div>
+
+  <script>
+    function processImage() {
+      const image = document.getElementById('imageInput').files[0];
+      if (!image) return alert("Pilih gambar dulu!");
+
+      Tesseract.recognize(image, 'eng', { logger: m => console.log(m) })
+        .then(({ data: { text } }) => {
+          document.getElementById('manualText').value = text;
+          parseText();
+        });
+    }
+
+    function parseText() {
+      const raw = document.getElementById('manualText').value;
+
+      const getValue = (label) => {
+        const re = new RegExp(label + ":\\s*(.*)", "i");
+        const m = raw.match(re);
+        return m ? m[1].trim() : "";
+      };
+
+      const res = `
+Orderan (2)
+=================
+Nama Toko: ${getValue("Nama Toko")}
+No. pesanan: ${getValue("No. pesanan")}
+SKU: ${getValue("SKU")}
+
+JUMLAH: ${getValue("JUMLAH") || "1"}
+MODEL: ${getValue("MODEL")}
+
+Nama penerima: ${getValue("Nama penerima")}
+Nomor Handphone: ${getValue("Nomor Handphone")}
+Kode Pos: ${getValue("Kode Pos")}
+Provinsi: ${getValue("Provinsi")}
+Kota: ${getValue("Kota")}
+Kecamatan: ${getValue("Kecamatan")}
+Negara: ${getValue("Negara")}
+Alamat Lengkap: ${getValue("Alamat Lengkap")}
+
+Total harga: ${getValue("Total harga")}
+Nominal Diskon Toko: ${getValue("Nominal Diskon Toko")}
+Voucher Akulaku: ${getValue("Voucher Akulaku")}
+Subsidi Platform: ${getValue("Subsidi Platform")}
+Ongkir Pembeli: ${getValue("Ongkir Pembeli")}
+Biaya & Tarif: ${getValue("Biaya & Tarif")}
+Penghasilan dari pesanan: ${getValue("Penghasilan dari pesanan")}
+
+Screenshot Menunggu Pengiriman:
+Screenshot Detail:
+      `.trim();
+
+      document.getElementById('output').textContent = res;
+    }
+
+    function downloadTxt() {
+      const txt = document.getElementById('output').textContent;
+      const blob = new Blob([txt], { type: "text/plain" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "orderan.txt";
+      a.click();
+    }
+  </script>
+
+</body>
+</html>
